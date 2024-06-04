@@ -82,9 +82,10 @@ def create_calendar(year=None, month=None):
     # Apply the styling function
     styled_calendar = calendar_df.style.apply(highlight_translucent, axis=1)
 
+
     # Display the calendar without the index
     st.write(f"## {datetime(year, month, 1).strftime('%B %Y')}")
-    st.dataframe(styled_calendar.hide(axis="index"))
+    st.dataframe(styled_calendar, hide_index=True, column_config={"B": None})
 
 
 def dashboard():
@@ -94,14 +95,41 @@ def dashboard():
 
 
     st.write("## Calendar")
-    selected_date = st.date_input("Select a date", datetime.now())
+    # Initialize session state variables
+    if "selected_date" not in st.session_state:
+        st.session_state.selected_date = datetime.now()
 
-    # Extract year and month from the selected date
-    selected_year = selected_date.year
-    selected_month = selected_date.month
+    # Date input for selecting a date
+    selected_date = st.date_input("Select a date", st.session_state.selected_date)
+
+    # Update session state with the selected date
+    if selected_date != st.session_state.selected_date:
+        st.session_state.selected_date = selected_date
+
+    selected_year = st.session_state.selected_date.year
+    selected_month = st.session_state.selected_date.month
+
+    # Buttons for navigating through months
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col1:
+        if st.button("Previous Month"):
+            if selected_month == 1:
+                selected_month = 12
+                selected_year -= 1
+            else:
+                selected_month -= 1
+            st.session_state.selected_date = datetime(selected_year, selected_month, 1)
+    with col3:
+        if st.button("Next Month"):
+            if selected_month == 12:
+                selected_month = 1
+                selected_year += 1
+            else:
+                selected_month += 1
+            st.session_state.selected_date = datetime(selected_year, selected_month, 1)
 
     # Call the function to create and display the calendar
-    create_calendar(selected_year, selected_month)
+    create_calendar(st.session_state.selected_date.year, st.session_state.selected_date.month)
 
     if st.button("RAG Retrieval Augmented Generation"):
         st.session_state['page'] = 'rag'
